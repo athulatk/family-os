@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: family-os-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: family_os
+      POSTGRES_PASSWORD: family_os
+      POSTGRES_DB: family_os
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

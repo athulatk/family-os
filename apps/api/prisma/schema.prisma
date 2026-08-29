@@ -1,0 +1,292 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ======================================================
+// ENUMS
+// ======================================================
+
+enum FamilyRole {
+  OWNER
+  MEMBER
+}
+
+
+// ======================================================
+// USER
+// ======================================================
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One user can have one family in V1
+  familyMembership FamilyMember?
+
+  // Personal finance
+  personalIncomes          PersonalIncome[]
+  personalBudgets          PersonalBudget[]
+  personalExpenseCategories PersonalExpenseCategory[]
+  personalExpenses         PersonalExpense[]
+
+  @@map("user")
+}
+
+
+// ======================================================
+// FAMILY
+// ======================================================
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members                 FamilyMember[]
+  budgets                 FamilyBudget[]
+  familyExpenseCategories FamilyExpenseCategory[]
+  familyExpenses          FamilyExpense[]
+
+  @@map("family")
+}
+
+
+// ======================================================
+// FAMILY MEMBER
+// ======================================================
+
+model FamilyMember {
+  id String @id @default(cuid())
+
+  userId   String @unique
+  familyId String
+
+  role     FamilyRole @default(MEMBER)
+  joinedAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  expensesPaid FamilyExpense[]
+
+  @@index([familyId])
+
+  @@map("family_member")
+}
+
+
+// ======================================================
+// PERSONAL INCOME
+// ======================================================
+
+model PersonalIncome {
+  id     String  @id @default(cuid())
+  amount Decimal
+
+  // Example: Salary, Freelance, Bonus
+  source String
+
+  // Month this income belongs to
+  month DateTime
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, month])
+
+  @@map("personal_income")
+}
+
+
+// ======================================================
+// PERSONAL BUDGET
+// ======================================================
+
+model PersonalBudget {
+  id     String  @id @default(cuid())
+  amount Decimal
+
+  // First day of the budget month
+  month DateTime
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One personal budget per user per month
+  @@unique([userId, month])
+
+  @@index([userId, month])
+
+  @@map("personal_budget")
+}
+
+
+// ======================================================
+// PERSONAL EXPENSE CATEGORY
+// ======================================================
+
+model PersonalExpenseCategory {
+  id   String @id @default(cuid())
+  name String
+  icon String?
+
+  // Soft delete / deactivate
+  isActive Boolean @default(true)
+
+  userId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  expenses PersonalExpense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Category names must be unique within a user's
+  // personal expense categories
+  @@unique([userId, name])
+
+  @@index([userId, isActive])
+
+  @@map("personal_expense_category")
+}
+
+
+// ======================================================
+// PERSONAL EXPENSE
+// ======================================================
+
+model PersonalExpense {
+  id     String  @id @default(cuid())
+  amount Decimal
+
+  note     String?
+  spentAt DateTime
+
+  userId     String
+  categoryId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  category PersonalExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, spentAt])
+  @@index([categoryId])
+
+  @@map("personal_expense")
+}
+
+
+// ======================================================
+// FAMILY BUDGET
+// ======================================================
+
+model FamilyBudget {
+  id     String  @id @default(cuid())
+  amount Decimal
+
+  // First day of the budget month
+  month DateTime
+
+  familyId String
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // One family budget per month
+  @@unique([familyId, month])
+
+  @@index([familyId, month])
+
+  @@map("family_budget")
+}
+
+
+// ======================================================
+// FAMILY EXPENSE CATEGORY
+// ======================================================
+
+model FamilyExpenseCategory {
+  id   String @id @default(cuid())
+  name String
+  icon String?
+
+  // Soft delete / deactivate
+  isActive Boolean @default(true)
+
+  familyId String
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  expenses FamilyExpense[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Category names must be unique within a family
+  @@unique([familyId, name])
+
+  @@index([familyId, isActive])
+
+  @@map("family_expense_category")
+}
+
+
+// ======================================================
+// FAMILY EXPENSE
+// ======================================================
+
+model FamilyExpense {
+  id     String  @id @default(cuid())
+  amount Decimal
+
+  note     String?
+  spentAt DateTime
+
+  familyId  String
+  categoryId String
+
+  // Family member who paid
+  paidByMemberId String
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+
+  category FamilyExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  paidByMember FamilyMember @relation(fields: [paidByMemberId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([familyId, spentAt])
+  @@index([categoryId])
+  @@index([paidByMemberId])
+
+  @@map("family_expense")
+}

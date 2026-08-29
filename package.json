@@ -1,0 +1,8 @@
+{
+  "name": "family-os",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
