@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-
+import authRoutes from "./modules/auth/auth.routes";
 
 const app = express();
 
@@ -20,5 +20,7 @@ app.get("/health", (req, res) => {
         service: "family-os-api"
     })
 })
+
+app.use("/api/auth", authRoutes);
 
 export default app;
