@@ -40,7 +40,27 @@ model User {
   personalExpenseCategories PersonalExpenseCategory[]
   personalExpenses         PersonalExpense[]
 
+  sessions Session[]
+
   @@map("user")
+}
+
+// ======================================================
+// SESSION
+// ======================================================
+
+model Session {
+  id           String    @id @default(cuid())
+  userId       String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
 }
 
 
