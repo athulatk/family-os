@@ -17,6 +17,14 @@ export class AuthRepository {
     });
   }
 
+  async findUserById(userId: string) {
+  return prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+}
+
   async createSession(
     userId: string,
     tokenHash: string,

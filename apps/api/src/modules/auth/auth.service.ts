@@ -125,4 +125,22 @@ async logout(refreshToken: string) {
     session.id,
   );
 }
+
+async getCurrentUser(userId: string) {
+  console.log("userId", userId);
+  const user =
+    await this.authRepository.findUserById(
+      userId,
+    );
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+  
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+  };
+}
 };

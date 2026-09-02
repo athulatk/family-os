@@ -106,4 +106,20 @@ logout = async (
       message: "Logged out successfully",
     },
   });
-}};
+}
+
+me = async (
+  req: Request,
+  res: Response,
+) => {
+  const user =
+    await this.authService.getCurrentUser(
+      req?.user?.id || "",
+    );
+
+  return res.json({
+    data: user,
+  });
+};
+
+};
