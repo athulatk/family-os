@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 
 import { AuthService } from "./auth.service";
+import { UnauthorizedError } from "../../errors/unauthorised.error";
 
 export class AuthController {
   constructor(
@@ -46,11 +47,7 @@ export class AuthController {
     req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return res.status(401).json({
-      error: {
-        message: "Refresh token missing",
-      },
-    });
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   const result = await this.authService.refresh(refreshToken);

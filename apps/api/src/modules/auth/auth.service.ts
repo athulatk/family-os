@@ -6,6 +6,7 @@ import {
   generateRefreshToken,
   hashRefreshToken,
 } from "./auth.utils";
+import { UnauthorizedError } from "../../errors/unauthorised.error";
 
 export class AuthService {
   constructor(
@@ -16,7 +17,7 @@ export class AuthService {
     const user = await this.authRepository.findUserByEmail(email);
 
     if (!user) {
-      throw new Error("Invalid email or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
 
     const passwordValid = await bcrypt.compare(
@@ -25,7 +26,7 @@ export class AuthService {
     );
 
     if (!passwordValid) {
-      throw new Error("Invalid email or password");
+      throw new UnauthorizedError("Invalid email or password");
     }
 
     const accessToken = generateAccessToken(user.id);
@@ -64,15 +65,11 @@ async refresh(refreshToken: string) {
     );
 
   if (!session) {
-    throw new Error("Invalid refresh token");
+    throw new UnauthorizedError("Invalid credentials");
   }
 
-  if (session.revokedAt) {
-    throw new Error("Refresh token has been revoked");
-  }
-
-  if (session.expiresAt < new Date()) {
-    throw new Error("Refresh token has expired");
+  if (session.revokedAt || session.expiresAt < new Date()) {
+    throw new UnauthorizedError("Credentials expired");
   }
 
   // Revoke old session
