@@ -2,6 +2,7 @@ import { type Request, type Response } from "express";
 
 import { AuthService } from "./auth.service";
 import { UnauthorizedError } from "../../errors/unauthorised.error";
+import { NODE_ENV } from "../../config/env";
 
 export class AuthController {
   constructor(
@@ -24,7 +25,7 @@ export class AuthController {
       result.refreshToken,
       {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: NODE_ENV === "production",
         sameSite: "lax",
         path: "/auth",
         maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -58,7 +59,7 @@ export class AuthController {
     {
       httpOnly: true,
       secure:
-        process.env.NODE_ENV === "production",
+        NODE_ENV === "production",
       sameSite: "lax",
       path: "/auth",
       maxAge:
@@ -81,11 +82,7 @@ logout = async (
     req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return res.status(401).json({
-      error: {
-        message: "Refresh token missing",
-      },
-    });
+    throw new UnauthorizedError("Not logged in")
   }
 
   await this.authService.logout(refreshToken);
@@ -93,7 +90,7 @@ logout = async (
   res.clearCookie("refreshToken", {
     httpOnly: true,
     secure:
-      process.env.NODE_ENV === "production",
+      NODE_ENV === "production",
     sameSite: "lax",
     path: "/auth",
   });
@@ -114,7 +111,7 @@ me = async (
       req?.user?.id || "",
     );
 
-  return res.json({
+  return res.status(200).json({
     data: user,
   });
 };

@@ -5,8 +5,7 @@ import {
 } from "express";
 
 import jwt from "jsonwebtoken";
-
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+import { ACCESS_TOKEN_SECRET } from "../config/env";
 
 export interface AccessTokenPayload {
   sub: string;
@@ -42,7 +41,7 @@ export function authMiddleware(
     });
   }
 
-  if (!accessTokenSecret) {
+  if (!ACCESS_TOKEN_SECRET) {
   throw new Error(
     "ACCESS_TOKEN_SECRET is not defined",
   );
@@ -51,7 +50,7 @@ export function authMiddleware(
 
   try {
     const payload =
-      jwt.verify(token, accessTokenSecret) as AccessTokenPayload;
+      jwt.verify(token, ACCESS_TOKEN_SECRET) as AccessTokenPayload;
 
     if (payload.type !== "access") {
       return res.status(401).json({

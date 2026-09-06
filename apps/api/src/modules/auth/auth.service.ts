@@ -7,6 +7,7 @@ import {
   hashRefreshToken,
 } from "./auth.utils";
 import { UnauthorizedError } from "../../errors/unauthorised.error";
+import { ACCESS_TOKEN_EXPIRES_IN } from "../../config/env";
 
 export class AuthService {
   constructor(
@@ -35,7 +36,7 @@ export class AuthService {
 
     const expiresAt = new Date();
     expiresAt.setDate(
-      expiresAt.getDate() + 30,
+      expiresAt.getDate() + Number(ACCESS_TOKEN_EXPIRES_IN),
     );
 
     await this.authRepository.createSession(
@@ -90,7 +91,7 @@ async refresh(refreshToken: string) {
   const expiresAt = new Date();
 
   expiresAt.setDate(
-    expiresAt.getDate() + 30,
+    expiresAt.getDate() + Number(ACCESS_TOKEN_EXPIRES_IN),
   );
 
   await this.authRepository.createSession(
