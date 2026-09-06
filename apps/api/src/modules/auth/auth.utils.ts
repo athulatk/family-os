@@ -1,7 +1,6 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
-
-const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+import { ACCESS_TOKEN_EXPIRES_IN, ACCESS_TOKEN_SECRET } from "../../config/env";
 
 export interface AccessTokenPayload {
   sub: string;
@@ -9,17 +8,18 @@ export interface AccessTokenPayload {
 }
 
 export function generateAccessToken(userId: string) {
-  if (!accessTokenSecret) {
+  if (!ACCESS_TOKEN_SECRET) {
     throw new Error("ACCESS_TOKEN_SECRET is not defined");
   }
+
   return jwt.sign(
     {
       sub: userId,
       type: "access",
     },
-    accessTokenSecret,
+    ACCESS_TOKEN_SECRET,
     {
-      expiresIn: "15m",
+      expiresIn: ACCESS_TOKEN_EXPIRES_IN,
     },
   );
 }
