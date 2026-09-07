@@ -7,307 +7,149 @@ datasource db {
   provider = "postgresql"
 }
 
-
-// ======================================================
-// ENUMS
-// ======================================================
-
-enum FamilyRole {
+enum GroupRole {
   OWNER
   MEMBER
 }
 
-
-// ======================================================
-// USER
-// ======================================================
-
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
+  id           String @id @default(cuid())
+  name         String
+  email        String @unique
   passwordHash String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // One user can have one family in V1
-  familyMembership FamilyMember?
-
-  // Personal finance
-  personalIncomes          PersonalIncome[]
-  personalBudgets          PersonalBudget[]
-  personalExpenseCategories PersonalExpenseCategory[]
-  personalExpenses         PersonalExpense[]
-
-  sessions Session[]
+  groupMemberships GroupMember[]
+  sessions         Session[]
 
   @@map("user")
 }
 
-// ======================================================
-// SESSION
-// ======================================================
-
 model Session {
-  id           String    @id @default(cuid())
-  userId       String
-  tokenHash    String    @unique
-  expiresAt    DateTime
-  createdAt    DateTime  @default(now())
-  revokedAt    DateTime?
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
 
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+
   @@map("session")
 }
 
-
-// ======================================================
-// FAMILY
-// ======================================================
-
-model Family {
-  id        String   @id @default(cuid())
-  name      String
+model Group {
+  id   String @id @default(cuid())
+  name String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members                 FamilyMember[]
-  budgets                 FamilyBudget[]
-  familyExpenseCategories FamilyExpenseCategory[]
-  familyExpenses          FamilyExpense[]
+  members    GroupMember[]
+  budgets    Budget[]
+  categories ExpenseCategory[]
+  expenses   Expense[]
 
-  @@map("family")
+  @@map("group")
 }
 
-
-// ======================================================
-// FAMILY MEMBER
-// ======================================================
-
-model FamilyMember {
+model GroupMember {
   id String @id @default(cuid())
 
-  userId   String @unique
-  familyId String
+  userId  String
+  groupId String
 
-  role     FamilyRole @default(MEMBER)
-  joinedAt DateTime    @default(now())
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-  expensesPaid FamilyExpense[]
+  expensesPaid Expense[]
 
-  @@index([familyId])
+  // A user can belong to a group only once
+  @@unique([groupId, userId])
 
-  @@map("family_member")
+  // Required for composite FK from Expense
+  @@unique([groupId, id])
+
+  @@index([userId])
+  @@index([groupId])
+
+  @@map("group_member")
 }
 
+model Budget {
+  id      String   @id @default(cuid())
+  amount  Decimal
+  month   DateTime
+  groupId String
 
-// ======================================================
-// PERSONAL INCOME
-// ======================================================
-
-model PersonalIncome {
-  id     String  @id @default(cuid())
-  amount Decimal
-
-  // Example: Salary, Freelance, Bonus
-  source String
-
-  // Month this income belongs to
-  month DateTime
-
-  userId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId, month])
+  // One budget per group per month
+  @@unique([groupId, month])
 
-  @@map("personal_income")
+  @@index([groupId, month])
+
+  @@map("budget")
 }
 
-
-// ======================================================
-// PERSONAL BUDGET
-// ======================================================
-
-model PersonalBudget {
-  id     String  @id @default(cuid())
-  amount Decimal
-
-  // First day of the budget month
-  month DateTime
-
-  userId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // One personal budget per user per month
-  @@unique([userId, month])
-
-  @@index([userId, month])
-
-  @@map("personal_budget")
-}
-
-
-// ======================================================
-// PERSONAL EXPENSE CATEGORY
-// ======================================================
-
-model PersonalExpenseCategory {
-  id   String @id @default(cuid())
-  name String
-  icon String?
-
-  // Soft delete / deactivate
+model ExpenseCategory {
+  id       String  @id @default(cuid())
+  name     String
+  icon     String?
   isActive Boolean @default(true)
 
-  userId String
+  groupId String
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-  expenses PersonalExpense[]
+  expenses Expense[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Category names must be unique within a group
+  @@unique([groupId, name])
 
-  // Category names must be unique within a user's
-  // personal expense categories
-  @@unique([userId, name])
+  // Required for composite FK from Expense
+  @@unique([groupId, id])
 
-  @@index([userId, isActive])
+  @@index([groupId, isActive])
 
-  @@map("personal_expense_category")
+  @@map("expense_category")
 }
 
-
-// ======================================================
-// PERSONAL EXPENSE
-// ======================================================
-
-model PersonalExpense {
-  id     String  @id @default(cuid())
+model Expense {
+  id     String   @id @default(cuid())
   amount Decimal
-
-  note     String?
+  note   String?
   spentAt DateTime
 
-  userId     String
-  categoryId String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  category PersonalExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId, spentAt])
-  @@index([categoryId])
-
-  @@map("personal_expense")
-}
-
-
-// ======================================================
-// FAMILY BUDGET
-// ======================================================
-
-model FamilyBudget {
-  id     String  @id @default(cuid())
-  amount Decimal
-
-  // First day of the budget month
-  month DateTime
-
-  familyId String
-
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // One family budget per month
-  @@unique([familyId, month])
-
-  @@index([familyId, month])
-
-  @@map("family_budget")
-}
-
-
-// ======================================================
-// FAMILY EXPENSE CATEGORY
-// ======================================================
-
-model FamilyExpenseCategory {
-  id   String @id @default(cuid())
-  name String
-  icon String?
-
-  // Soft delete / deactivate
-  isActive Boolean @default(true)
-
-  familyId String
-
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
-
-  expenses FamilyExpense[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Category names must be unique within a family
-  @@unique([familyId, name])
-
-  @@index([familyId, isActive])
-
-  @@map("family_expense_category")
-}
-
-
-// ======================================================
-// FAMILY EXPENSE
-// ======================================================
-
-model FamilyExpense {
-  id     String  @id @default(cuid())
-  amount Decimal
-
-  note     String?
-  spentAt DateTime
-
-  familyId  String
-  categoryId String
-
-  // Family member who paid
+  groupId        String
+  categoryId     String
   paidByMemberId String
 
-  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
-  category FamilyExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  // Ensures category belongs to the same group
+  category ExpenseCategory @relation(fields: [groupId, categoryId], references: [groupId, id], onDelete: Restrict)
 
-  paidByMember FamilyMember @relation(fields: [paidByMemberId], references: [id], onDelete: Restrict)
+  // Ensures payer belongs to the same group
+  paidByMember GroupMember @relation(fields: [groupId, paidByMemberId], references: [groupId, id], onDelete: Restrict)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([familyId, spentAt])
+  @@index([groupId, spentAt])
   @@index([categoryId])
   @@index([paidByMemberId])
 
-  @@map("family_expense")
+  @@map("expense")
 }
