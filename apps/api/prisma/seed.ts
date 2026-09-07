@@ -3,7 +3,6 @@ import "dotenv/config";
 import bcrypt from "bcrypt";
 
 import { PrismaClient } from "../src/generated/prisma/client";
-import { FamilyRole } from "../src/generated/prisma/enums";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 const adapter = new PrismaPg({
@@ -30,28 +29,6 @@ async function main() {
       name: "Lins",
       email: "lins@example.com",
       passwordHash: await bcrypt.hash("password123", 10),
-    },
-  });
-
-  const family = await prisma.family.create({
-    data: {
-      name: "Athul & Lins",
-    },
-  });
-
-  await prisma.familyMember.create({
-    data: {
-      userId: athul.id,
-      familyId: family.id,
-      role: FamilyRole.OWNER,
-    },
-  });
-
-  await prisma.familyMember.create({
-    data: {
-      userId: lins.id,
-      familyId: family.id,
-      role: FamilyRole.MEMBER,
     },
   });
 
