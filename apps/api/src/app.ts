@@ -29,6 +29,6 @@ app.get("/health", (_, res) => {
 app.use("/auth", authRoutes);
 app.use("/groups", groupRoutes)
 
-// app.use(errorMiddleware);
+app.use(errorMiddleware);
 
 export default app;
