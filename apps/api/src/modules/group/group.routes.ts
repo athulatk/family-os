@@ -11,7 +11,7 @@ const groupService = new GroupService(groupRepository);
 const groupController = new GroupController(groupService);
 
 router.get("/", authMiddleware, groupController.list);
-router.post("/create", authMiddleware, groupController.create);
+router.post("/", authMiddleware, groupController.create);
 
 
 export default router;
