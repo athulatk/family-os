@@ -12,6 +12,13 @@ enum GroupRole {
   MEMBER
 }
 
+enum InvitationStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  FAILED
+}
+
 model User {
   id           String @id @default(cuid())
   name         String
@@ -23,6 +30,7 @@ model User {
 
   groupMemberships GroupMember[]
   sessions         Session[]
+  createdInvitations Invitation[]
 
   @@map("user")
 }
@@ -53,6 +61,7 @@ model Group {
   budgets    Budget[]
   categories ExpenseCategory[]
   expenses   Expense[]
+  invitations Invitation[]
 
   @@map("group")
 }
@@ -82,6 +91,33 @@ model GroupMember {
   @@index([groupId])
 
   @@map("group_member")
+}
+
+model Invitation {
+  id        String  @id @default(cuid())
+
+  groupId   String
+  createdById String
+
+  email     String
+  tokenHash String
+  status    InvitationStatus @default(PENDING)
+
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([groupId])
+  @@index([createdById])
+  @@index([email])
+  @@index([email, status])
+
+  @@map("invitation")
 }
 
 model Budget {

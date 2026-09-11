@@ -12,6 +12,7 @@ const groupController = new GroupController(groupService);
 
 router.get("/", authMiddleware, groupController.list);
 router.post("/", authMiddleware, groupController.create);
+router.post("/:id/invitations", authMiddleware, groupController.create)
 
 
 export default router;
