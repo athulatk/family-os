@@ -2,6 +2,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
 import { DATABASE_URL } from "../../config/env";
 
+import { InvitationStatus } from "../../generated/prisma/client";
+
 const adapter = new PrismaPg({
   connectionString: DATABASE_URL!,
 });
@@ -9,6 +11,14 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({adapter});
 
 export class GroupRespository{
+    async findById(groupId: string) {
+        return prisma.group.findUnique({
+            where: {
+                id: groupId,
+            },
+        });
+    }
+
     async findByUserId(userId: string){
         return prisma.group.findMany({
             where: {
