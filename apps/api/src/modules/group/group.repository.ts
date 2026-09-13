@@ -11,6 +11,14 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({adapter});
 
 export class GroupRespository{
+    async findById(groupId: string) {
+        return prisma.group.findUnique({
+            where: {
+                id: groupId,
+            },
+        });
+    }
+
     async findByUserId(userId: string){
         return prisma.group.findMany({
             where: {

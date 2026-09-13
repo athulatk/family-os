@@ -11,6 +11,41 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({adapter})
 
 export class InvitationRepository {
+    async findGroupMember(groupId: string, userId: string) {
+        return prisma.groupMember.findUnique({
+            where: {
+                groupId_userId: {
+                    groupId,
+                    userId,
+            },
+        },
+        });
+    }
+
+    async findMemberByEmail(groupId: string, email: string) {
+        return prisma.groupMember.findFirst({
+        where: {
+            groupId,
+            user: {
+                email,
+            },
+        },
+        });
+    }
+
+    async findPendingInvitation(groupId: string, email: string) {
+        return prisma.invitation.findFirst({
+            where: {
+                groupId,
+                email,
+                status: "PENDING",
+                expiresAt: {
+                    gt: new Date(),
+                },
+            },
+        });
+    }
+
     async create(data: InvitationCreateInput) {
         return prisma.invitation.create({
             data
