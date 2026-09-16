@@ -15,11 +15,7 @@ export class EmailService {
     });
   }
 
-  async sendGroupInvitation(
-    email: string,
-    groupName: string,
-    invitationUrl: string,
-  ) {
+  async sendGroupInvitation(email: string, groupName: string, invitationUrl: string) {
     await this.transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to: email,
