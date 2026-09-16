@@ -7,7 +7,7 @@ const adapter = new PrismaPg({
   connectionString: DATABASE_URL!,
 });
 
-const prisma = new PrismaClient({adapter});
+const prisma = new PrismaClient({ adapter });
 
 export class AuthRepository {
   async findUserByEmail(email: string) {
@@ -19,18 +19,14 @@ export class AuthRepository {
   }
 
   async findUserById(userId: string) {
-  return prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-}
+    return prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+  }
 
-  async createSession(
-    userId: string,
-    tokenHash: string,
-    expiresAt: Date,
-  ) {
+  async createSession(userId: string, tokenHash: string, expiresAt: Date) {
     return prisma.session.create({
       data: {
         userId,
@@ -64,9 +60,9 @@ export class AuthRepository {
 
   async deleteSession(sessionId: string) {
     return prisma.session.delete({
-        where: {
-            id: sessionId,
-        },
+      where: {
+        id: sessionId,
+      },
     });
   }
 }

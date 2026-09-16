@@ -7,32 +7,23 @@ import { EmailService } from "../../email/email.service";
 import { GroupRespository } from "../group.repository";
 
 const router = Router({
-    mergeParams: true
+  mergeParams: true,
 });
 
-const invitationRepository =
-  new InvitationRepository();
+const invitationRepository = new InvitationRepository();
 
 const emailService = new EmailService();
 
 const groupRepository = new GroupRespository();
 
-const invitationService =
-  new InvitationService(
-    invitationRepository,
-    emailService,
-    groupRepository
-  );
-
-const invitationController =
-  new InvitationController(
-    invitationService,
-  );
-
-router.post(
-  "/",
-  authMiddleware,
-  invitationController.create,
+const invitationService = new InvitationService(
+  invitationRepository,
+  emailService,
+  groupRepository,
 );
+
+const invitationController = new InvitationController(invitationService);
+
+router.post("/", authMiddleware, invitationController.create);
 
 export default router;

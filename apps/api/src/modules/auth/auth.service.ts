@@ -1,18 +1,12 @@
 import bcrypt from "bcrypt";
 
-import { AuthRepository } from "./auth.repository";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  hashRefreshToken,
-} from "./auth.utils";
+import type { AuthRepository } from "./auth.repository";
+import { generateAccessToken, generateRefreshToken, hashRefreshToken } from "./auth.utils";
 import { UnauthorizedError } from "../../errors/unauthorised.error";
 import { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN_DAYS } from "../../config/env";
 
 export class AuthService {
-  constructor(
-    private readonly authRepository: AuthRepository,
-  ) {}
+  constructor(private readonly authRepository: AuthRepository) {}
 
   async login(email: string, password: string) {
     const user = await this.authRepository.findUserByEmail(email);
@@ -21,10 +15,7 @@ export class AuthService {
       throw new UnauthorizedError("Invalid email or password");
     }
 
-    const passwordValid = await bcrypt.compare(
-      password,
-      user.passwordHash,
-    );
+    const passwordValid = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordValid) {
       throw new UnauthorizedError("Invalid email or password");
@@ -35,15 +26,9 @@ export class AuthService {
     const refreshTokenHash = hashRefreshToken(refreshToken);
 
     const expiresAt = new Date();
-    expiresAt.setDate(
-      expiresAt.getDate() + Number(REFRESH_TOKEN_EXPIRES_IN_DAYS),
-    );
+    expiresAt.setDate(expiresAt.getDate() + Number(REFRESH_TOKEN_EXPIRES_IN_DAYS));
 
-    await this.authRepository.createSession(
-      user.id,
-      refreshTokenHash,
-      expiresAt,
-    );
+    await this.authRepository.createSession(user.id, refreshTokenHash, expiresAt);
 
     return {
       user: {
@@ -56,89 +41,64 @@ export class AuthService {
     };
   }
 
-async refresh(refreshToken: string) {
-  const tokenHash =
-    hashRefreshToken(refreshToken);
+  async refresh(refreshToken: string) {
+    const tokenHash = hashRefreshToken(refreshToken);
 
-  const session =
-    await this.authRepository.findSessionByTokenHash(
-      tokenHash,
-    );
+    const session = await this.authRepository.findSessionByTokenHash(tokenHash);
 
-  if (!session) {
-    throw new UnauthorizedError("Invalid credentials");
+    if (!session) {
+      throw new UnauthorizedError("Invalid credentials");
+    }
+
+    if (session.revokedAt || session.expiresAt < new Date()) {
+      throw new UnauthorizedError("Credentials expired");
+    }
+
+    // Revoke old session
+    await this.authRepository.revokeSession(session.id);
+
+    // Generate new tokens
+    const accessToken = generateAccessToken(session.user.id);
+
+    const newRefreshToken = generateRefreshToken();
+
+    const newRefreshTokenHash = hashRefreshToken(newRefreshToken);
+
+    const expiresAt = new Date();
+
+    expiresAt.setDate(expiresAt.getDate() + Number(ACCESS_TOKEN_EXPIRES_IN));
+
+    await this.authRepository.createSession(session.user.id, newRefreshTokenHash, expiresAt);
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 
-  if (session.revokedAt || session.expiresAt < new Date()) {
-    throw new UnauthorizedError("Credentials expired");
+  async logout(refreshToken: string) {
+    const tokenHash = hashRefreshToken(refreshToken);
+
+    const session = await this.authRepository.findSessionByTokenHash(tokenHash);
+
+    if (!session) {
+      return;
+    }
+
+    await this.authRepository.deleteSession(session.id);
   }
 
-  // Revoke old session
-  await this.authRepository.revokeSession(
-    session.id,
-  );
+  async getCurrentUser(userId: string) {
+    const user = await this.authRepository.findUserById(userId);
 
-  // Generate new tokens
-  const accessToken =
-    generateAccessToken(session.user.id);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-  const newRefreshToken =
-    generateRefreshToken();
-
-  const newRefreshTokenHash =
-    hashRefreshToken(newRefreshToken);
-
-  const expiresAt = new Date();
-
-  expiresAt.setDate(
-    expiresAt.getDate() + Number(ACCESS_TOKEN_EXPIRES_IN),
-  );
-
-  await this.authRepository.createSession(
-    session.user.id,
-    newRefreshTokenHash,
-    expiresAt,
-  );
-
-  return {
-    accessToken,
-    refreshToken: newRefreshToken,
-  };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    };
+  }
 }
-
-async logout(refreshToken: string) {
-  const tokenHash =
-    hashRefreshToken(refreshToken);
-
-  const session =
-    await this.authRepository.findSessionByTokenHash(
-      tokenHash,
-    );
-
-  if (!session) {
-    return;
-  }
-
-  await this.authRepository.deleteSession(
-    session.id,
-  );
-}
-
-async getCurrentUser(userId: string) {
-  console.log("userId", userId);
-  const user =
-    await this.authRepository.findUserById(
-      userId,
-    );
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-  
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-  };
-}
-};

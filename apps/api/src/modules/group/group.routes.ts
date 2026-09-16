@@ -15,5 +15,4 @@ router.get("/", authMiddleware, groupController.list);
 router.post("/", authMiddleware, groupController.create);
 router.use("/:groupId/invitations", authMiddleware, invitationRoutes);
 
-
 export default router;

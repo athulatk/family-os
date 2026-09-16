@@ -1,24 +1,15 @@
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import { type Request, type Response, type NextFunction } from "express";
 
 import jwt from "jsonwebtoken";
 import { ACCESS_TOKEN_SECRET } from "../config/env";
 
 export interface AccessTokenPayload {
   sub: string;
-  type: "access";
+  type: string;
 }
 
-export function authMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  const authorization =
-    req.headers.authorization;
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  const authorization = req.headers.authorization;
 
   if (!authorization) {
     return res.status(401).json({
@@ -30,10 +21,7 @@ export function authMiddleware(
 
   const [scheme, token] = authorization.split(" ");
 
-  if (
-    scheme !== "Bearer" ||
-    !token
-  ) {
+  if (scheme !== "Bearer" || !token) {
     return res.status(401).json({
       error: {
         message: "Invalid authorization header",
@@ -42,15 +30,11 @@ export function authMiddleware(
   }
 
   if (!ACCESS_TOKEN_SECRET) {
-  throw new Error(
-    "ACCESS_TOKEN_SECRET is not defined",
-  );
-}
-
+    throw new Error("ACCESS_TOKEN_SECRET is not defined");
+  }
 
   try {
-    const payload =
-      jwt.verify(token, ACCESS_TOKEN_SECRET) as AccessTokenPayload;
+    const payload = jwt.verify(token, ACCESS_TOKEN_SECRET) as AccessTokenPayload;
 
     if (payload.type !== "access") {
       return res.status(401).json({
