@@ -1,0 +1,1 @@
+export { emailWorker } from "./email.worker";

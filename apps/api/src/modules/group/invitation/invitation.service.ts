@@ -62,7 +62,7 @@ export class InvitationService {
 
     const invitationUrl = `${process.env.APP_URL}/invitations/${token}`;
 
-    await this.emailService.sendGroupInvitation(normalizedEmail, group.name, invitationUrl);
+    await this.emailService.queueGroupInvitationEmail({email: normalizedEmail, groupName: group.name, invitationUrl});
 
     return {
       invitation,
