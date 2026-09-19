@@ -8,6 +8,7 @@
     "worker:dev": "node dist/worker/index.js",
     "build": "tsc",
     "start": "node dist/server.js",
+    "worker:start": "node dist/worker/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

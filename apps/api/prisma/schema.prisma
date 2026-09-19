@@ -100,7 +100,7 @@ model Invitation {
   createdById String
 
   email     String
-  tokenHash String
+  tokenHash String @unique
   status    InvitationStatus @default(PENDING)
 
   expiresAt DateTime

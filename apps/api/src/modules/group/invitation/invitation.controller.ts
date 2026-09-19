@@ -26,4 +26,15 @@ export class InvitationController {
       },
     });
   };
+
+  accept = async (req: Request, res: Response) => {
+    const tokenParam = req.params.token;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
+
+    const result = await this.invitationService.acceptInvite(req.user!.id, token ?? "");
+
+    return res.status(200).json({
+      data: result,
+    });
+  };
 }

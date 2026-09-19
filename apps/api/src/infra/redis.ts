@@ -1,8 +1,11 @@
 import IORedis from "ioredis";
 
-export const redis = new IORedis(
-  process.env.REDIS_URL!,
-  {
-    maxRetriesPerRequest: null,
-  },
-);
+const redisUrl = process.env.REDIS_URL;
+
+if (!redisUrl) {
+  throw new Error("REDIS_URL is required");
+}
+
+export const redis = new IORedis(redisUrl, {
+  maxRetriesPerRequest: null,
+});
