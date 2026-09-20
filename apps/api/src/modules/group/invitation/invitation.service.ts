@@ -62,11 +62,30 @@ export class InvitationService {
 
     const invitationUrl = `${process.env.APP_URL}/invitations/${token}`;
 
-    await this.emailService.sendGroupInvitation(normalizedEmail, group.name, invitationUrl);
+    try {
+      await this.emailService.queueGroupInvitationEmail({
+        email: normalizedEmail,
+        groupName: group.name,
+        invitationUrl,
+      });
+    } catch (error) {
+      await this.invitationRepository.markFailed(invitation.id);
+      throw error;
+    }
 
     return {
       invitation,
       token,
     };
+  }
+
+  async acceptInvite(userId: string, token: string) {
+    const normalizedToken = token.trim();
+
+    if (!normalizedToken) {
+      throw new AppError(400, "Invitation token is required");
+    }
+
+    return this.invitationRepository.accept(hashInvitationToken(normalizedToken), userId);
   }
 }

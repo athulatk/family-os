@@ -3,6 +3,8 @@
     "module": "es2022",
     "target": "esnext",
     "types": ["node", "express"],
+    "rootDir": "src",
+    "outDir": "dist",
 
     "sourceMap": true,
     "declaration": true,

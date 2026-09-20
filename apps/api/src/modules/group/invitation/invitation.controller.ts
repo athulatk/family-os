@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import type { InvitationService } from "./invitation.service";
 import type { InvitationCreateRequestBody } from "./invitation.types";
+import { AppError } from "../../../errors/app.error";
 
 export class InvitationController {
   constructor(private readonly invitationService: InvitationService) {}
@@ -11,7 +12,7 @@ export class InvitationController {
     const groupId = Array.isArray(groupIdParam) ? groupIdParam[0] : groupIdParam;
 
     if (!groupId) {
-      throw new Error("Group id is required");
+      throw new AppError(400, "Group id is required");
     }
 
     const { email = "" } = req.body as InvitationCreateRequestBody;
@@ -24,6 +25,17 @@ export class InvitationController {
         email: result.invitation.email,
         expiresAt: result.invitation.expiresAt,
       },
+    });
+  };
+
+  accept = async (req: Request, res: Response) => {
+    const tokenParam = req.params.token;
+    const token = Array.isArray(tokenParam) ? tokenParam[0] : tokenParam;
+
+    const result = await this.invitationService.acceptInvite(req.user!.id, token ?? "");
+
+    return res.status(200).json({
+      data: result,
     });
   };
 }

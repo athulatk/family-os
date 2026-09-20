@@ -9,6 +9,7 @@ import { GroupRespository } from "../group.repository";
 const router = Router({
   mergeParams: true,
 });
+export const invitationAcceptRouter = Router();
 
 const invitationRepository = new InvitationRepository();
 
@@ -25,5 +26,6 @@ const invitationService = new InvitationService(
 const invitationController = new InvitationController(invitationService);
 
 router.post("/", authMiddleware, invitationController.create);
+invitationAcceptRouter.post("/:token/accept", authMiddleware, invitationController.accept);
 
 export default router;
