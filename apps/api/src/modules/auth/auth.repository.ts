@@ -36,6 +36,34 @@ export class AuthRepository {
     });
   }
 
+  async createUserWithSession(
+    name: string,
+    email: string,
+    passwordHash: string,
+    refreshTokenHash: string,
+    expiresAt: Date,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name,
+          email,
+          passwordHash,
+        },
+      });
+
+      await tx.session.create({
+        data: {
+          userId: user.id,
+          tokenHash: refreshTokenHash,
+          expiresAt,
+        },
+      });
+
+      return user;
+    });
+  }
+
   async findSessionByTokenHash(tokenHash: string) {
     return prisma.session.findUnique({
       where: {
