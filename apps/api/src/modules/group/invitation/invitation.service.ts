@@ -23,6 +23,16 @@ export class InvitationService {
       throw new AppError(403, "Only the group owner can invite members");
     }
 
+    const group = await this.groupRepository.findById(groupId);
+
+    if (!group) {
+      throw new AppError(404, "Group not found");
+    }
+
+    if (group.type === "PERSONAL") {
+      throw new AppError(400, "Members cannot be invited to a personal group");
+    }
+
     const existingMember = await this.invitationRepository.findMemberByEmail(
       groupId,
       normalizedEmail,
@@ -53,12 +63,6 @@ export class InvitationService {
       tokenHash,
       expiresAt,
     });
-
-    const group = await this.groupRepository.findById(groupId);
-
-    if (!group) {
-      throw new AppError(404, "Group not found");
-    }
 
     const invitationUrl = `${process.env.APP_URL}/invitations/${token}`;
 

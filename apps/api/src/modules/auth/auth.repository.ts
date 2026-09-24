@@ -60,6 +60,20 @@ export class AuthRepository {
         },
       });
 
+      await tx.group.create({
+        data: {
+          name: "Personal",
+          type: "PERSONAL",
+          personalOwnerId: user.id,
+          members: {
+            create: {
+              userId: user.id,
+              role: "OWNER",
+            },
+          },
+        },
+      });
+
       return user;
     });
   }
