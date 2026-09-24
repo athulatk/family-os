@@ -7,6 +7,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum GroupType {
+  PERSONAL
+  SHARED
+}
+
 enum GroupRole {
   OWNER
   MEMBER
@@ -29,6 +34,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   groupMemberships GroupMember[]
+  personalGroup Group? @relation("PersonalGroupOwner")
   sessions         Session[]
   createdInvitations Invitation[]
 
@@ -53,6 +59,11 @@ model Session {
 model Group {
   id   String @id @default(cuid())
   name String
+  type GroupType @default(SHARED)
+
+  // Set only for PERSONAL groups
+  personalOwnerId String? @unique
+  personalOwner   User?   @relation("PersonalGroupOwner", fields: [personalOwnerId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

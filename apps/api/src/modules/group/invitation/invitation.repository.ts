@@ -70,6 +70,10 @@ export class InvitationRepository {
         throw new AppError(404, "Invitation not found");
       }
 
+      if (invitation.group.type === "PERSONAL") {
+        throw new AppError(409, "Personal groups cannot accept members");
+      }
+
       if (invitation.status !== "PENDING" && invitation.status !== "SENT") {
         throw new AppError(409, "Invitation is no longer available");
       }

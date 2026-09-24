@@ -37,6 +37,7 @@ export class GroupRespository {
       const group = await tx.group.create({
         data: {
           name: groupName,
+          type: "SHARED",
         },
       });
 
